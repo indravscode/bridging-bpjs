@@ -1,0 +1,21 @@
+{
+  "name": "indravscode/bridging-bpjs",
+  "description": "Package untuk bridging bpjs vclaim, apcare dan pcare",
+  "type": "library",
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "Indra Adnyana",
+      "email": "gdindra13@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Bridging\\Bpjs\\": "src/"
+    }
+  },
+  "require": {
+    "guzzlehttp/guzzle": ">=6.0"
+  }
+}
