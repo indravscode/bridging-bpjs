@@ -1,7 +1,9 @@
 <?php
+
 namespace Bridging\Bpjs\PCare;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class PcareService
 {
@@ -89,52 +91,59 @@ class PcareService
     public function __construct($configurations = [])
     {
         $this->clients = new Client([
-            'verify' => false
+            'verify' => false,
         ]);
 
         foreach ($configurations as $key => $val) {
             if (property_exists($this, $key)) {
-                $this->$key = $val;
+                $this->{$key} = $val;
             }
         }
 
-        //set X-Timestamp, X-Signature, and finally the headers
-        $this->setTimestamp()->setSignature()->setAuthorization()->setHeaders();
+        // set X-Timestamp, X-Signature, Authorization, and headers
+        $this->setTimestamp()
+            ->setSignature()
+            ->setAuthorization()
+            ->setHeaders();
     }
 
     public function keyword($keyword)
     {
         $this->feature .= "/{$keyword}";
+
         return $this;
     }
 
     public function responseDecoded($response)
     {
-        // ubah ke array
         $responseArray = json_decode($response, true);
-        // dd($response);
+
         if (!is_array($responseArray)) {
             return [
-                "metaData" => [
-                    "message" => $responseArray,
-                    "code" => 201
-                ]
+                'metaData' => [
+                    'message' => $response,
+                    'code' => 201,
+                ],
             ];
         }
 
-        if (!isset($responseArray["response"]) || $responseArray["response"] == []) {
+        if (!isset($responseArray['response']) || $responseArray['response'] === []) {
             return $responseArray;
         }
 
-        $responseDecrypt = $this->stringDecrypt($responseArray["response"]);
+        // Only decrypt when response is encrypted string
+        if (!is_string($responseArray['response'])) {
+            return $responseArray;
+        }
+
+        $responseDecrypt = $this->stringDecrypt($responseArray['response']);
         $responseArrayDecrypt = json_decode($responseDecrypt, true);
 
-        // apabila bukan array
-        if (!is_array($responseArrayDecrypt) || $responseDecrypt == '') {
+        if (!is_array($responseArrayDecrypt) || $responseDecrypt === '') {
             return $responseArray;
         }
 
-        $responseArray["response"] = $responseArrayDecrypt;
+        $responseArray['response'] = $responseArrayDecrypt;
 
         return $responseArray;
     }
@@ -142,44 +151,49 @@ class PcareService
     public function index($start = null, $limit = null)
     {
         $feature = $this->feature;
-        if ($start !== null and $limit !== null) {
+
+        if ($start !== null && $limit !== null) {
             $response = $this->get("{$feature}/{$start}/{$limit}");
         } else {
-            $response = $this->get("{$feature}");
+            $response = $this->get($feature);
         }
-        // dd($response);
+
         return $this->responseDecoded($response);
     }
 
     public function show($keyword = null, $start = null, $limit = null)
     {
         $feature = $this->feature;
-        if ($start !== null and $limit !== null) {
+
+        if ($start !== null && $limit !== null) {
             $response = $this->get("{$feature}/{$keyword}/{$start}/{$limit}");
         } elseif ($keyword !== null) {
             $response = $this->get("{$feature}/{$keyword}");
         } else {
-            $response = $this->get("{$feature}");
+            $response = $this->get($feature);
         }
+
         return $this->responseDecoded($response);
     }
 
     public function store($data = [])
     {
         $response = $this->post($this->feature, $data);
-        // dd($response);
+
         return $this->responseDecoded($response);
     }
 
     public function update($data = [])
     {
         $response = $this->put($this->feature, $data);
+
         return $this->responseDecoded($response);
     }
 
     public function destroy($keyword = null, $parameters = [])
     {
         $response = $this->delete($this->feature, $keyword, $parameters);
+
         return $this->responseDecoded($response);
     }
 
@@ -199,9 +213,10 @@ class PcareService
     protected function setTimestamp()
     {
         date_default_timezone_set('UTC');
-        $this->timestamp = strval(time() - strtotime('1970-01-01 00:00:00'));
+        $this->timestamp = (string) (time() - strtotime('1970-01-01 00:00:00'));
 
         date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Singapore'));
+
         return $this;
     }
 
@@ -210,8 +225,10 @@ class PcareService
         $data = "{$this->cons_id}&{$this->timestamp}";
         $signature = hash_hmac('sha256', $data, $this->secret_key, true);
         $encodedSignature = base64_encode($signature);
-        $this->key_decrypt = "$this->cons_id$this->secret_key$this->timestamp";
+
+        $this->key_decrypt = "{$this->cons_id}{$this->secret_key}{$this->timestamp}";
         $this->signature = $encodedSignature;
+
         return $this;
     }
 
@@ -220,6 +237,7 @@ class PcareService
         $data = "{$this->username}:{$this->password}:{$this->app_code}";
         $encodedAuth = base64_encode($data);
         $this->authorization = "Basic {$encodedAuth}";
+
         return $this;
     }
 
@@ -248,12 +266,18 @@ class PcareService
         return $this->service_name;
     }
 
-    function stringDecrypt($string)
+    public function stringDecrypt($string)
     {
-        $encrypt_method = 'AES-256-CBC';
-        $key_hash = hex2bin(hash('sha256', $this->key_decrypt));
+        $encryptMethod = 'AES-256-CBC';
+        $keyHash = hex2bin(hash('sha256', $this->key_decrypt));
         $iv = substr(hex2bin(hash('sha256', $this->key_decrypt)), 0, 16);
-        $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key_hash, OPENSSL_RAW_DATA, $iv);
+        $output = openssl_decrypt(
+            base64_decode($string),
+            $encryptMethod,
+            $keyHash,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
 
         return \LZCompressor\LZString::decompressFromEncodedURIComponent($output);
     }
@@ -262,95 +286,64 @@ class PcareService
     {
         $params = $this->getParams($parameters);
         $this->headers['Content-Type'] = 'application/json; charset=utf-8';
-        // $this->headers['Content-Type'] = 'text/plain';
-        try {
-            $response = $this->clients->request(
-                'GET',
-                "{$this->base_url}/{$this->service_name}/{$feature}{$params}",
-                [
-                    'headers' => $this->headers
-                ]
-            )->getBody()->getContents();
-        } catch (\Exception $e) {
-            $response = $e->getMessage();
-        }
 
-        return $response;
+        $url = "{$this->base_url}/{$this->service_name}/{$feature}{$params}";
+
+        return $this->sendRequest('GET', $url, [
+            'headers' => $this->headers,
+        ]);
     }
 
     protected function post($feature, $data = [], $headers = [])
     {
-        // $this->headers['Content-Type'] = 'application/json';
         $this->headers['Accept'] = 'application/json';
         $this->headers['Content-Type'] = 'text/plain';
 
         if (!empty($headers)) {
             $this->headers = array_merge($this->headers, $headers);
         }
-        try {
-            $response = $this->clients->request(
-                'POST',
-                "{$this->base_url}/{$this->service_name}/{$feature}",
-                [
-                    'headers' => $this->headers,
-                    'body' => json_encode($data),
-                ]
-            )->getBody()->getContents();
-        } catch (\Exception $e) {
-            $response = $e->getMessage();
-        }
-        return $response;
+
+        $url = "{$this->base_url}/{$this->service_name}/{$feature}";
+
+        return $this->sendRequest('POST', $url, [
+            'headers' => $this->headers,
+            'body' => json_encode($data),
+        ]);
     }
 
     protected function put($feature, $data = [])
     {
-        // $this->headers['Content-Type'] = 'application/json';
-        $this->headers['Content-Type'] = 'text/plain';
         $this->headers['Accept'] = 'application/json';
-        // dd("{$this->base_url}/{$this->service_name}/{$feature}");
-        try {
-            $response = $this->clients->request(
-                'PUT',
-                "{$this->base_url}/{$this->service_name}/{$feature}",
-                [
-                    'headers' => $this->headers,
-                    'body' => json_encode($data),
-                ]
-            )->getBody()->getContents();
-        } catch (\Exception $e) {
-            $response = $e->getMessage();
-        }
-        return $response;
+        $this->headers['Content-Type'] = 'text/plain';
+
+        $url = "{$this->base_url}/{$this->service_name}/{$feature}";
+
+        return $this->sendRequest('PUT', $url, [
+            'headers' => $this->headers,
+            'body' => json_encode($data),
+        ]);
     }
 
     protected function delete($feature, $id, $parameters = [])
     {
         $params = $this->getParams($parameters);
+
         $this->headers['Content-Type'] = 'application/json';
         $this->headers['Accept'] = 'application/json';
+
         $url = "{$this->base_url}/{$this->service_name}";
-        if ($id !== null) {
-            $url .= "/{$feature}/{$id}";
-        } else {
-            $url .= "/{$feature}";
-        }
-        try {
-            $response = $this->clients->request(
-                'DELETE',
-                "{$url}{$params}",
-                [
-                    'headers' => $this->headers,
-                ]
-            )->getBody()->getContents();
-        } catch (\Exception $e) {
-            $response = $e->getMessage();
-        }
-        return $response;
+        $url .= $id !== null ? "/{$feature}/{$id}" : "/{$feature}";
+        $url .= $params;
+
+        return $this->sendRequest('DELETE', $url, [
+            'headers' => $this->headers,
+        ]);
     }
 
     private function getParams($parameters)
     {
         $params = '';
+
         foreach ($parameters as $key => $value) {
             if (is_int($key)) {
                 $params .= "/{$value}";
@@ -358,6 +351,27 @@ class PcareService
                 $params .= "/{$key}/{$value}";
             }
         }
+
         return $params;
+    }
+
+    /**
+     * Send HTTP request and normalize error handling.
+     */
+    protected function sendRequest(string $method, string $url, array $options = [])
+    {
+        try {
+            $response = $this->clients->request($method, $url, $options);
+
+            return $response->getBody()->getContents();
+        } catch (RequestException $e) {
+            if ($e->hasResponse()) {
+                return (string) $e->getResponse()->getBody()->getContents();
+            }
+
+            return $e->getMessage();
+        } catch (\Throwable $e) {
+            return $e->getMessage();
+        }
     }
 }
