@@ -1,4 +1,4 @@
-# BPJS Bridging Vclaim, APlicare & Pcare for Laravel
+# BPJS Bridging Vclaim, APlicare, Pcare & I-Care for Laravel
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
@@ -7,7 +7,7 @@ Bridging VClaim
 
 ### Installation
 
-```sh
+```bash
 composer require indravscode/bridging-bpjs
 ```
 
@@ -20,7 +20,9 @@ BPJS_CONSID="2112121"
 BPJS_SCREET_KEY="121212121"
 BPJS_BASE_URL="https://new-api.bpjs-kesehatan.go.id:8080"
 BPJS_SERVICE_NAME="new-vclaim-rest"
+```
 
+```php
 use Bridging\Bpjs\VClaim;
 
 function vclaim_conf(){
@@ -36,8 +38,6 @@ function vclaim_conf(){
 
 $referensi = new VClaim\Referensi($this->vclaim_conf());
 return response($referensi->propinsi());
-
-
 ```
 
 ### use for PCare
@@ -54,7 +54,9 @@ BPJS_PCARE_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
 BPJS_PCARE_SERVICE_NAME="pcare-rest"
 BPJS_PCARE_USER_KEY="1a2b3c1a2b3c"
 BPJS_PCARE_ANTREAN_USER_KEY="3c2b1a3c2b1a"
+```
 
+```php
 use Bridging\Bpjs\PCare;
 
 function pcare_conf(){
@@ -175,6 +177,49 @@ return $bpjs->rujuk()->khusus($kodeKhusus)->nomorKartu($nomorKartu)->tanggalRuju
 // spesialis rujuk
 $bpjs = new PCare\Spesialis($this->pcare_conf());
 return $bpjs->rujuk()->khusus($kodeKhusus)->subSpesialis($kodeSubSpesialis)->nomorKartu($nomorKartu)->tanggalRujuk($tanggalRujuk)->index();
+```
+
+### use for I-Care
+
+add to `.env` file
+
+```env
+BPJS_ICARE_CONSID="2112121"
+BPJS_ICARE_SECRET_KEY="1a2b1a2b1a2b"
+BPJS_ICARE_USERNAME="username"
+BPJS_ICARE_PASSWORD="password"
+BPJS_ICARE_APP_CODE="095"
+BPJS_ICARE_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
+BPJS_ICARE_SERVICE_NAME="ihs_dev"
+BPJS_ICARE_USER_KEY="1a2b3c1a2b3c"
+BPJS_ICARE_ANTREAN_USER_KEY="3c2b1a3c2b1a"
+```
+
+```php
+use Bridging\Bpjs\ICare;
+
+function icare_conf(){
+    $config = [
+        'cons_id'      => env('BPJS_ICARE_CONSID'),
+        'secret_key'   => env('BPJS_ICARE_SECRET_KEY'),
+        'username'     => env('BPJS_ICARE_USERNAME'),
+        'password'     => env('BPJS_ICARE_PASSWORD'),
+        'app_code'     => env('BPJS_ICARE_APP_CODE'),
+        'base_url'     => env('BPJS_ICARE_BASE_URL'),
+        'service_name' => env('BPJS_ICARE_SERVICE_NAME'),
+        'user_key'     => env('BPJS_ICARE_USER_KEY'),
+        'antrean_user_key' => env('BPJS_ICARE_ANTREAN_USER_KEY'),
+    ];
+    return $config;
+}
+
+// FKTP validate
+$bpjs = new ICare\FKTP($this->icare_conf());
+return $bpjs->validate($nomorKartu);
+
+// FKRTL validate
+$bpjs = new ICare\FKRTL($this->icare_conf());
+return $bpjs->validate($nomorKartu, $kodeDokter);
 ```
 
 Katalog BPJS:
