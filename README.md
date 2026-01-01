@@ -203,7 +203,7 @@ $bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->rujuk()->subSpesialis($kodeSubSpesialis)->sarana($kodeSarana)->tanggalRujuk($tanggalRujuk)->index();
 
 // Spesialis - Get Faskes Rujukan Khusus THALASEMIA dan HEMOFILI
-$bpjs = new PCare\Spesialis(pcare_conf());
+$bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->rujuk()->khusus($kodeKhusus)->subSpesialis($kodeSubSpesialis)->nomorKartu($nomorKartu)->tanggalRujuk($tanggalRujuk)->index();
 ```
 
