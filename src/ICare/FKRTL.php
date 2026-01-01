@@ -8,7 +8,7 @@ class FKRTL extends ICareService
     {
         $payload = [
             'param' => $nomorKartu,
-            'codedokter' => $kodeDokter,
+            'kodedokter' => $kodeDokter,
         ];
 
         $response = $this->post('api/rs/validate', $payload);

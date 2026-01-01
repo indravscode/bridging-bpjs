@@ -1,55 +1,87 @@
-# BPJS Bridging Vclaim, APlicare, Pcare & I-Care for Laravel
+# Bridging BPJS (VClaim, Aplicare, PCare, i-Care) for Laravel
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-Bridging VClaim
+Package PHP untuk bridging beberapa Web Service BPJS Kesehatan:
 
-### Installation
+- VClaim
+- Aplicare
+- PCare
+- i-Care
+
+## Installation
 
 ```bash
 composer require indravscode/bridging-bpjs
 ```
 
-### use for VCLAIM
+## Example Values
 
-add to `.env` file
+Contoh value:
+
+```php
+$nomorKartu = '0000039043765';
+$nomorKunjungan = '0114A0260815Y000003';
+$kodeDokter = '123123';
+$kodeDiagnosa = 'A001';
+$jenisKartu = 'nik'; // 'noka' atau 'nik'
+$kodeJenisKelompok = 01;
+$kodeTkp = 10;
+$kodeSpesialis = 'ANA';
+$kodeSubSpesialis = '26';
+$kodeSarana = '1';
+$kodeKhusus = 'THA'; // ["THA","HEM"]
+$keywordObat = '38250800016'; // Kode atau Nama Obat DPHO
+$bulanKegiatan = '15-01-2026';
+$educationId = '16020000001';
+$nomorUrut = 'A1';
+$tanggalDaftar = '31-01-2026';
+$tanggalRujuk = '17-01-2026';
+$indeksMulai = 1;
+$batasData = 10;
+```
+
+## VClaim
+
+Tambahkan ke file `.env`:
 
 ```env
 BPJS_CONSID="2112121"
 BPJS_SECRET_KEY="121212121"
 BPJS_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
 BPJS_SERVICE_NAME="vclaim-rest"
+BPJS_USER_KEY="your-user-key"
 ```
 
 ```php
 use Bridging\Bpjs\VClaim;
 
-function vclaim_conf(){
+function vclaim_config(){
     $config = [
         'cons_id' => env('BPJS_CONSID'),
         'secret_key' => env('BPJS_SECRET_KEY'),
         'base_url' => env('BPJS_BASE_URL'),
         'service_name' => env('BPJS_SERVICE_NAME'),
+        'user_key' => env('BPJS_USER_KEY'),
     ];
     return $config;
 }
 
-
-$referensi = new VClaim\Referensi($this->vclaim_conf());
+$referensi = new VClaim\Referensi($this->vclaim_config());
 return response($referensi->propinsi());
 ```
 
-### use for PCare
+## PCare
 
-add to `.env` file
+Tambahkan ke file `.env`:
 
 ```env
 BPJS_PCARE_CONSID="2112121"
 BPJS_PCARE_SECRET_KEY="1a2b1a2b1a2b"
-BPJS_PCARE_USERNAME="username"
-BPJS_PCARE_PASSWORD="password"
-BPJS_PCARE_APP_CODE="095"
+BPJS_PCARE_USERNAME="username-pcare"
+BPJS_PCARE_PASSWORD="password-pcare"
+BPJS_PCARE_APP_CODE="012"
 BPJS_PCARE_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
 BPJS_PCARE_SERVICE_NAME="pcare-rest"
 BPJS_PCARE_USER_KEY="1a2b3c1a2b3c"
@@ -59,7 +91,7 @@ BPJS_PCARE_ANTREAN_USER_KEY="3c2b1a3c2b1a"
 ```php
 use Bridging\Bpjs\PCare;
 
-function pcare_conf(){
+function pcare_config(){
     $config = [
             'cons_id'      => env('BPJS_PCARE_CONSID'),
             'secret_key'   => env('BPJS_PCARE_SECRET_KEY'),
@@ -74,123 +106,119 @@ function pcare_conf(){
     return $config;
 }
 
-//diagnosa
-$bpjs = new PCare\Diagnosa($this->pcare_conf());
-return $bpjs->keyword('001')->index(0, 2);
+// Diagnosa - Get Diagnosa
+$bpjs = new PCare\Diagnosa($this->pcare_config());
+return $bpjs->keyword($kodeDiagnosa)->index($indeksMulai, $batasData);
 
-// dokter
-$bpjs = new PCare\Dokter($this->pcare_conf());
-return $bpjs->index($start, $limit);
+// Dokter - Get Dokter
+$bpjs = new PCare\Dokter($this->pcare_config());
+return $bpjs->index($indeksMulai, $batasData);
 
-// kesadaran
-$bpjs = new PCare\Kesadaran($this->pcare_conf());
+// Kesadaran - Get Kesadaran
+$bpjs = new PCare\Kesadaran($this->pcare_config());
 return $bpjs->index();
 
-// kunjungan rujukan
-$bpjs = new PCare\Kunjungan($this->pcare_conf());
+// Kunjungan - Get Rujukan
+$bpjs = new PCare\Kunjungan($this->pcare_config());
 return $bpjs->rujukan($nomorKunjungan)->index();
-// kunjungan riwayat
 
-$bpjs = new PCare\Kunjungan($this->pcare_conf());
+// Kunjungan - Get Riwayat Kunjungan
+$bpjs = new PCare\Kunjungan($this->pcare_config());
 return $bpjs->riwayat($nomorKartu)->index();
 
-// mcu
-$bpjs = new PCare\Mcu($this->pcare_conf());
+// Get MCU
+$bpjs = new PCare\Mcu($this->pcare_config());
 return $bpjs->kunjungan($nomorKunjungan)->index();
 
-// obat dpho
-$bpjs = new PCare\Obat($this->pcare_conf());
-return $bpjs->dpho($keyword)->index($start, $limit);
+// Obat - Get DPHO
+$bpjs = new PCare\Obat($this->pcare_config());
+return $bpjs->dpho($keywordObat)->index($indeksMulai, $batasData);
 
-// obat kunjungan
-$bpjs = new PCare\Obat($this->pcare_conf());
+// Obat - Get Obat by Kunjungan
+$bpjs = new PCare\Obat($this->pcare_config());
 return $bpjs->kunjungan($nomorKunjungan)->index();
 
-// pendaftaran tanggal daftar
-$bpjs = new PCare\Pendaftaran($this->pcare_conf());
-return $bpjs->tanggalDaftar($tglDaftar)->index($start, $limit);
+// Pendaftaran - Get Pendaftaran by Nomor Urut
+$bpjs = new PCare\Pendaftaran($this->pcare_config());
+return $bpjs->nomorUrut($nomorUrut)->tanggalDaftar($tanggalDaftar)->index($indeksMulai, $batasData);
 
-// pendaftaran nomor urut
-$bpjs = new PCare\Diagnosa($this->pcare_conf());
-return $bpjs->nomorUrut($nomorUrut)->tanggalDaftar($tanggalDaftar)->index();
+// Pendaftaran - Get Pendaftaran Provider
+$bpjs = new PCare\Pendaftaran($this->pcare_config());
+return $bpjs->tanggalDaftar($tanggalDaftar)->index($indeksMulai, $batasData);
 
-// peserta
-$bpjs = new PCare\Peserta($this->pcare_conf());
-return $bpjs->keyword($keyword)->show();
+// Peserta - Get Peserta
+$bpjs = new PCare\Peserta($this->pcare_config());
+return $bpjs->keyword($nomorKartu)->show();
 
-// peserta jenis kartu ["nik" || "noka"]
-$bpjs = new PCare\Peserta($this->pcare_conf());
-return $bpjs->jenisKartu($jenisKartu)->keyword($keyword)->show();
+// Peserta - Get Peserta by Jenis Kartu ["nik" || "noka"]
+$bpjs = new PCare\Peserta($this->pcare_config());
+return $bpjs->jenisKartu($jenisKartu)->keyword($nomorKartu)->show();
 
-// poli
-$bpjs = new PCare\Poli($this->pcare_conf());
-return $bpjs->fktp()->index($start, $limit);
+// Poli - Get Poli FKTP
+$bpjs = new PCare\Poli($this->pcare_config());
+return $bpjs->fktp()->index($indeksMulai, $batasData);
 
-// provider
-$bpjs = new PCare\provider($this->pcare_conf());
-return $bpjs->index($start, $limit);
+// Provider - Get Provider Rayonisasi
+$bpjs = new PCare\Provider($this->pcare_config());
+return $bpjs->index($indeksMulai, $batasData);
 
-// tindakan kode tkp
-$bpjs = new PCare\Tindakan($this->pcare_conf());
-return $bpjs->kodeTkp($keyword)->index($start, $limit);
+// Tindakan - Get Referensi Tindakan
+$bpjs = new PCare\Tindakan($this->pcare_config());
+return $bpjs->kodeTkp($kodeTkp)->index($indeksMulai, $batasData);
 
-// tindakan kunjungan
-$bpjs = new PCare\Tindakan($this->pcare_conf());
+// Tindakan - Get Tindakan by Kunjungan
+$bpjs = new PCare\Tindakan($this->pcare_config());
 return $bpjs->kunjungan($nomorKunjungan)->index();
 
-// kelompok club
-$bpjs = new PCare\Kelompok($this->pcare_conf());
+// Kelompok - Get Club Prolanis
+$bpjs = new PCare\Kelompok($this->pcare_config());
 return $bpjs->club($kodeJenisKelompok)->index();
 
-// kelompok kegiatan
-$bpjs = new PCare\Kelompok($this->pcare_conf());
-return $bpjs->kegiatan($bulan)->index();
+// Kelompok - Get Kegiatan Kelompok
+$bpjs = new PCare\Kelompok($this->pcare_config());
+return $bpjs->kegiatan($bulanKegiatan)->index();
 
-// kelompok peserta
-$bpjs = new PCare\Kelompok($this->pcare_conf());
-return $bpjs->peserta($eduId)->index();
+// Kelompok - Get Peserta Kegiatan Kelompok
+$bpjs = new PCare\Kelompok($this->pcare_config());
+return $bpjs->peserta($educationId)->index();
 
-// spesialis
-$bpjs = new PCare\Spesialis($this->pcare_conf());
+// Spesialis - Get Referensi Spesialis
+$bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->index();
 
-// spesialis sub spesialis
-$bpjs = new PCare\Spesialis($this->pcare_conf());
-return $bpjs->keyword($keyword)->subSpesialis()->index();
+// Spesialis - Get Referensi Sub Spesialis
+$bpjs = new PCare\Spesialis($this->pcare_config());
+return $bpjs->keyword($kodeSpesialis)->subSpesialis()->index();
 
-// spesialis sarana
-$bpjs = new PCare\Spesialis($this->pcare_conf());
+// Spesialis - Get Referensi Sarana
+$bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->sarana()->index();
 
-// spesialis khusus
-$bpjs = new PCare\Spesialis($this->pcare_conf());
+// Spesialis - Get Referensi Khusus
+$bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->khusus()->index();
 
-// spesialis rujuk
-$bpjs = new PCare\Spesialis($this->pcare_conf());
+// Spesialis - Get Faskes Rujukan Sub Spesialis
+$bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->rujuk()->subSpesialis($kodeSubSpesialis)->sarana($kodeSarana)->tanggalRujuk($tanggalRujuk)->index();
 
-// spesialis rujuk
-$bpjs = new PCare\Spesialis($this->pcare_conf());
-return $bpjs->rujuk()->khusus($kodeKhusus)->nomorKartu($nomorKartu)->tanggalRujuk($tanggalRujuk)->index();
-
-// spesialis rujuk
-$bpjs = new PCare\Spesialis($this->pcare_conf());
+// Spesialis - Get Faskes Rujukan Khusus THALASEMIA dan HEMOFILI
+$bpjs = new PCare\Spesialis(pcare_conf());
 return $bpjs->rujuk()->khusus($kodeKhusus)->subSpesialis($kodeSubSpesialis)->nomorKartu($nomorKartu)->tanggalRujuk($tanggalRujuk)->index();
 ```
 
-### use for I-Care
+## i-Care
 
-add to `.env` file
+Tambahkan ke file `.env`:
 
 ```env
 BPJS_ICARE_CONSID="2112121"
 BPJS_ICARE_SECRET_KEY="1a2b1a2b1a2b"
-BPJS_ICARE_USERNAME="username"
-BPJS_ICARE_PASSWORD="password"
-BPJS_ICARE_APP_CODE="095"
+BPJS_ICARE_USERNAME="username-icare"
+BPJS_ICARE_PASSWORD="password-icare"
+BPJS_ICARE_APP_CODE="012"
 BPJS_ICARE_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
-BPJS_ICARE_SERVICE_NAME="ihs_dev"
+BPJS_ICARE_SERVICE_NAME="ihs"
 BPJS_ICARE_USER_KEY="1a2b3c1a2b3c"
 BPJS_ICARE_ANTREAN_USER_KEY="3c2b1a3c2b1a"
 ```
@@ -198,7 +226,7 @@ BPJS_ICARE_ANTREAN_USER_KEY="3c2b1a3c2b1a"
 ```php
 use Bridging\Bpjs\ICare;
 
-function icare_conf(){
+function icare_config(){
     $config = [
         'cons_id'      => env('BPJS_ICARE_CONSID'),
         'secret_key'   => env('BPJS_ICARE_SECRET_KEY'),
@@ -214,24 +242,39 @@ function icare_conf(){
 }
 
 // FKTP validate
-$bpjs = new ICare\FKTP($this->icare_conf());
+$bpjs = new ICare\FKTP($this->icare_config());
 return $bpjs->validate($nomorKartu);
 
 // FKRTL validate
-$bpjs = new ICare\FKRTL($this->icare_conf());
+$bpjs = new ICare\FKRTL($this->icare_config());
 return $bpjs->validate($nomorKartu, $kodeDokter);
 ```
 
-Katalog BPJS:
+## Katalog Web Service BPJS:
 
-- Vclaim V1.1: https://dvlp.bpjs-kesehatan.go.id/VClaim-Katalog
-- Pcare V3: https://new-api.bpjs-kesehatan.go.id/pcare-rest-v3.0
+- https://dvlp.bpjs-kesehatan.go.id:8888/trust-mark/login.html
 
 ## Contributing
 
-Contributions are more than welcome!
+Semua kontribusi sangat kami apresiasi dan terbuka untuk diterima! Silakan lihat [panduan kontribusi](CONTRIBUTING.md).
 
-If you find this package useful, consider giving it a star! ⭐
+Jika Anda menemukan package ini bermanfaat, pertimbangkan untuk memberikan bintang! ⭐
+
+## Manual Installation
+
+Clone the repo:
+
+```bash
+git clone --depth 1 https://github.com/indravscode/bridging-bpjs.git
+cd bridging-bpjs
+rm -rf ./.git
+```
+
+Install the dependencies:
+
+```bash
+composer install
+```
 
 ## Inspirations
 
