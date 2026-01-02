@@ -1,6 +1,6 @@
 {
   "name": "indravscode/bridging-bpjs",
-  "description": "Package untuk bridging bpjs vclaim, apcare dan pcare",
+  "description": "Package wrapper untuk bridging BPJS (VClaim, Aplicare, PCare dan i-Care)",
   "type": "library",
   "license": "MIT",
   "minimum-stability": "dev",
