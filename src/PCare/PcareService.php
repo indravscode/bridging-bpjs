@@ -203,9 +203,12 @@ class PcareService
             'X-cons-id' => $this->cons_id,
             'X-Timestamp' => $this->timestamp,
             'X-Signature' => $this->signature,
-            'X-Authorization' => $this->authorization,
             'user_key' => $this->user_key,
         ];
+
+        if (!empty($this->authorization)) {
+            $this->headers['X-Authorization'] = $this->authorization;
+        }
 
         return $this;
     }
@@ -215,7 +218,9 @@ class PcareService
         date_default_timezone_set('UTC');
         $this->timestamp = (string) (time() - strtotime('1970-01-01 00:00:00'));
 
-        date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Singapore'));
+        if (function_exists('env')) {
+            date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Singapore'));
+        }
 
         return $this;
     }
@@ -234,9 +239,11 @@ class PcareService
 
     protected function setAuthorization()
     {
-        $data = "{$this->username}:{$this->password}:{$this->app_code}";
-        $encodedAuth = base64_encode($data);
-        $this->authorization = "Basic {$encodedAuth}";
+        if (!empty($this->username) && !empty($this->password) && !empty($this->app_code)) {
+            $data = "{$this->username}:{$this->password}:{$this->app_code}";
+            $encodedAuth = base64_encode($data);
+            $this->authorization = "Basic {$encodedAuth}";
+        }
 
         return $this;
     }
