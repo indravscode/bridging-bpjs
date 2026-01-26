@@ -8,6 +8,7 @@ Package PHP untuk bridging beberapa Web Service BPJS Kesehatan:
 - VClaim
 - Aplicare
 - PCare
+- Antrean Online - WS BPJS
 - i-Care
 
 ## Installation
@@ -85,7 +86,6 @@ BPJS_PCARE_APP_CODE="012"
 BPJS_PCARE_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
 BPJS_PCARE_SERVICE_NAME="pcare-rest"
 BPJS_PCARE_USER_KEY="1a2b3c1a2b3c"
-BPJS_PCARE_ANTREAN_USER_KEY="3c2b1a3c2b1a"
 ```
 
 ```php
@@ -101,7 +101,6 @@ function pcare_config(){
             'base_url'     => env('BPJS_PCARE_BASE_URL'),
             'service_name' => env('BPJS_PCARE_SERVICE_NAME'),
             'user_key' => env('BPJS_PCARE_USER_KEY'),
-            'antrean_user_key' => env('BPJS_PCARE_ANTREAN_USER_KEY'),
     ];
     return $config;
 }
@@ -207,6 +206,81 @@ $bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->rujuk()->khusus($kodeKhusus)->subSpesialis($kodeSubSpesialis)->nomorKartu($nomorKartu)->tanggalRujuk($tanggalRujuk)->index();
 ```
 
+## Antrean FKTP
+
+Tambahkan ke file `.env`:
+
+```env
+BPJS_ANTREAN_CONSID="2112121"
+BPJS_ANTREAN_SECRET_KEY="1a2b1a2b1a2b"
+BPJS_ANTREAN_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
+BPJS_ANTREAN_SERVICE_NAME="antrean"
+BPJS_ANTREAN_USER_KEY="your-antrean-user-key"
+```
+
+```php
+use Bridging\Bpjs\Antrean;
+
+function antrean_config(){
+    $config = [
+        'cons_id'      => env('BPJS_ANTREAN_CONSID'),
+        'secret_key'   => env('BPJS_ANTREAN_SECRET_KEY'),
+        'base_url'     => env('BPJS_ANTREAN_BASE_URL'),
+        'service_name' => env('BPJS_ANTREAN_SERVICE_NAME'),
+        'user_key'     => env('BPJS_ANTREAN_USER_KEY'),
+    ];
+    return $config;
+}
+
+// Referensi Poli (GET)
+$bpjs = new Antrean\ReferensiPoli($this->antrean_config());
+return $bpjs->tanggal('2024-01-03')->show();
+
+// Referensi Dokter (GET)
+$bpjs = new Antrean\ReferensiDokter($this->antrean_config());
+return $bpjs->kodePoli('001')->tanggal('2024-01-03')->show();
+
+// Tambah Antrean (POST)
+$bpjs = new Antrean\WSBPJS($this->antrean_config());
+$data = [
+    'nomorkartu' => '000012345678',
+    'nik' => '3212345678987654',
+    'nohp' => '085635228888',
+    'kodepoli' => 'ANA',
+    'namapoli' => 'Anak',
+    'norm' => '123345',
+    'tanggalperiksa' => '2021-01-28',
+    'kodedokter' => 12345,
+    'namadokter' => 'Dr. Hendra',
+    'jampraktek' => '08:00-16:00',
+    'nomorantrean' => 'A-12',
+    'angkaantrean' => 12,
+    'keterangan' => '',
+];
+return $bpjs->add()->store($data);
+
+// Update Status / Panggil Antrean (POST)
+$bpjs = new Antrean\WSBPJS($this->antrean_config());
+$data = [
+    'tanggalperiksa' => '2024-03-01',
+    'kodepoli' => '001',
+    'nomorkartu' => '0000034563234',
+    'status' => 1,
+    'waktu' => 1616559330000,
+];
+return $bpjs->panggil()->store($data);
+
+// Batal Antrean (POST)
+$bpjs = new Antrean\WSBPJS($this->antrean_config());
+$data = [
+    'tanggalperiksa' => '2024-01-03',
+    'kodepoli' => '001',
+    'nomorkartu' => '0000045258563',
+    'alasan' => 'Terjadi perubahan jadwal dokter',
+];
+return $bpjs->batal()->store($data);
+```
+
 ## i-Care
 
 Tambahkan ke file `.env`:
@@ -220,7 +294,6 @@ BPJS_ICARE_APP_CODE="012"
 BPJS_ICARE_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
 BPJS_ICARE_SERVICE_NAME="ihs"
 BPJS_ICARE_USER_KEY="1a2b3c1a2b3c"
-BPJS_ICARE_ANTREAN_USER_KEY="3c2b1a3c2b1a"
 ```
 
 ```php
@@ -236,7 +309,6 @@ function icare_config(){
         'base_url'     => env('BPJS_ICARE_BASE_URL'),
         'service_name' => env('BPJS_ICARE_SERVICE_NAME'),
         'user_key'     => env('BPJS_ICARE_USER_KEY'),
-        'antrean_user_key' => env('BPJS_ICARE_ANTREAN_USER_KEY'),
     ];
     return $config;
 }
