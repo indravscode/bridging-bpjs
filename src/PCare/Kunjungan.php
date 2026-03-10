@@ -8,7 +8,14 @@ class Kunjungan extends PcareService
     /**
      * @var string
      */
-    protected $feature = 'kunjungan/v1';
+    protected $feature = 'kunjungan';
+
+    public function store($data = [])
+    {
+        $response = $this->post('kunjungan/v1', $data);
+
+        return $this->responseDecoded($response);
+    }
 
     public function rujukan($nomorKunjungan)
     {
