@@ -17,6 +17,13 @@ class Kunjungan extends PcareService
         return $this->responseDecoded($response);
     }
 
+    public function update($data = [])
+    {
+        $response = $this->put('kunjungan/v1', $data);
+
+        return $this->responseDecoded($response);
+    }
+
     public function rujukan($nomorKunjungan)
     {
         $this->feature .= "/rujukan/{$nomorKunjungan}";
