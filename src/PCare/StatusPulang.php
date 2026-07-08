@@ -12,6 +12,7 @@ class StatusPulang extends PcareService
 
     public function rawatInap($status = true)
     {
+        $status = $status ? 'true' : 'false';
         $this->feature .= "/rawatInap/{$status}";
         return $this;
     }
