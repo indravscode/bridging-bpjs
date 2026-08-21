@@ -204,6 +204,22 @@ return $bpjs->rujuk()->subSpesialis($kodeSubSpesialis)->sarana($kodeSarana)->tan
 // Spesialis - Get Faskes Rujukan Khusus THALASEMIA dan HEMOFILI
 $bpjs = new PCare\Spesialis($this->pcare_config());
 return $bpjs->rujuk()->khusus($kodeKhusus)->subSpesialis($kodeSubSpesialis)->nomorKartu($nomorKartu)->tanggalRujuk($tanggalRujuk)->index();
+
+// Skrining - Get Skrining Riwayat Kesehatan by Penyakit
+$bpjs = new PCare\Skrining($this->pcare_config());
+return $bpjs->rekap()->index();
+
+// Skrining - Get Detail Peserta Skrining Riwayat Kesehatan
+$bpjs = new PCare\Skrining($this->pcare_config());
+return $bpjs->peserta()->keyword($nomorAtauNamaPeserta)->index($indeksMulai, $batasData);
+
+// Skrining - Get Data Prolanis Diabetes Mellitus
+$bpjs = new PCare\Skrining($this->pcare_config());
+return $bpjs->prolanisDm()->keyword($nomorAtauNamaPeserta)->index($indeksMulai, $batasData);
+
+// Skrining - Get Data Prolanis Hipertensi
+$bpjs = new PCare\Skrining($this->pcare_config());
+return $bpjs->prolanisHt()->keyword($nomorAtauNamaPeserta)->index($indeksMulai, $batasData);
 ```
 
 ## Antrean FKTP
