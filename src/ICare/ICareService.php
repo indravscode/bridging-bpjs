@@ -2,6 +2,7 @@
 
 namespace Bridging\Bpjs\ICare;
 
+use Bridging\Bpjs\Support\Timeout;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -242,17 +243,17 @@ class ICareService
     protected function sendRequest(string $method, string $url, array $options = [])
     {
         try {
-            $response = $this->clients->request($method, $url, $options);
+            $response = $this->clients->request($method, $url, Timeout::options($options));
 
             return $response->getBody()->getContents();
         } catch (RequestException $e) {
-            if ($e->hasResponse()) {
+            if (method_exists($e, 'getResponse') && $e->getResponse() !== null) {
                 return (string) $e->getResponse()->getBody()->getContents();
             }
 
-            return $e->getMessage();
+            return Timeout::error($e);
         } catch (\Throwable $e) {
-            return $e->getMessage();
+            return Timeout::error($e);
         }
     }
 }

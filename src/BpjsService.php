@@ -1,6 +1,7 @@
 <?php
 namespace Bridging\Bpjs;
 
+use Bridging\Bpjs\Support\Timeout;
 use GuzzleHttp\Client;
 
 class BpjsService
@@ -59,7 +60,8 @@ class BpjsService
     public function __construct($configurations)
     {
         $this->clients = new Client([
-            'verify' => false
+            'verify' => false,
+            'timeout' => Timeout::SECONDS,
         ]);
 
         foreach ($configurations as $key => $val) {
@@ -111,7 +113,7 @@ class BpjsService
                 ]
             )->getBody()->getContents();
         } catch (\Exception $e) {
-            $response = $e->getMessage();
+            $response = Timeout::error($e);
         }
         return $response;
     }
@@ -132,7 +134,7 @@ class BpjsService
                 ]
             )->getBody()->getContents();
         } catch (\Exception $e) {
-            $response = $e->getMessage();
+            $response = Timeout::error($e);
         }
         return $response;
     }
@@ -150,7 +152,7 @@ class BpjsService
                 ]
             )->getBody()->getContents();
         } catch (\Exception $e) {
-            $response = $e->getMessage();
+            $response = Timeout::error($e);
         }
         return $response;
     }
@@ -169,7 +171,7 @@ class BpjsService
                 ]
             )->getBody()->getContents();
         } catch (\Exception $e) {
-            $response = $e->getMessage();
+            $response = Timeout::error($e);
         }
         return $response;
     }
