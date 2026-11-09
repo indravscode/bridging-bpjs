@@ -87,8 +87,7 @@ class BpjsService
 
     protected function setTimestamp()
     {
-        date_default_timezone_set('UTC');
-        $this->timestamp = strval(time() - strtotime('1970-01-01 00:00:00'));
+        $this->timestamp = strval(time());
         return $this;
     }
 
