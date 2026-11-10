@@ -216,12 +216,7 @@ class PcareService
 
     protected function setTimestamp()
     {
-        date_default_timezone_set('UTC');
-        $this->timestamp = (string) (time() - strtotime('1970-01-01 00:00:00'));
-
-        if (function_exists('env')) {
-            date_default_timezone_set(env('APP_TIMEZONE', 'Asia/Singapore'));
-        }
+        $this->timestamp = (string) time();
 
         return $this;
     }
