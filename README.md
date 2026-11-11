@@ -1,23 +1,100 @@
-# Bridging BPJS (VClaim, Aplicare, PCare, i-Care) for Laravel
+# Bridging BPJS untuk PHP dan Laravel: VClaim, PCare, Aplicare, Antrean Online, i-Care
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Latest Version](https://img.shields.io/packagist/v/indravscode/bridging-bpjs.svg?style=flat-square)](https://packagist.org/packages/indravscode/bridging-bpjs)
+[![Total Downloads](https://img.shields.io/packagist/dt/indravscode/bridging-bpjs.svg?style=flat-square)](https://packagist.org/packages/indravscode/bridging-bpjs)
 
-Package PHP untuk bridging beberapa Web Service BPJS Kesehatan:
+`indravscode/bridging-bpjs` adalah package PHP untuk integrasi Web Service BPJS Kesehatan pada aplikasi Laravel. Package ini ditujukan bagi developer SIMRS, aplikasi klinik, dan sistem informasi fasilitas kesehatan yang membutuhkan akses ke VClaim, PCare, Aplicare, Antrean Online, dan i-Care.
 
-- VClaim
-- Aplicare
-- PCare
-- Antrean Online - WS BPJS
-- i-Care
+## Layanan yang tersedia
 
-## Installation
+| Layanan | Cakupan dalam package | Panduan |
+| --- | --- | --- |
+| VClaim | Referensi, peserta, SEP, rujukan, monitoring, dan lembar pengajuan klaim | [Integrasi VClaim](#vclaim) |
+| PCare | Peserta, pendaftaran, kunjungan, diagnosa, obat, tindakan, dan referensi layanan FKTP | [Integrasi PCare](#pcare) |
+| Aplicare | Referensi kelas serta baca, tambah, ubah, dan hapus data ketersediaan kamar | [Integrasi Aplicare](#aplicare) |
+| Antrean Online BPJS | Referensi poli dan dokter serta tambah, panggil, dan batal antrean FKTP | [Integrasi Antrean FKTP](#antrean-fktp) |
+| i-Care | Validasi i-Care FKTP dan FKRTL | [Integrasi i-Care](#i-care) |
+
+## Daftar isi
+
+- [Persyaratan dan kompatibilitas](#persyaratan-dan-kompatibilitas)
+- [Instalasi](#instalasi)
+- [Mulai menggunakan di Laravel](#mulai-menggunakan-di-laravel)
+- [Contoh nilai parameter](#contoh-nilai-parameter)
+- [VClaim](#vclaim)
+- [Aplicare](#aplicare)
+- [PCare](#pcare)
+- [Antrean FKTP](#antrean-fktp)
+- [i-Care](#i-care)
+- [Katalog Web Service BPJS](#katalog-web-service-bpjs)
+- [Contributing](#contributing)
+- [Manual Installation](#manual-installation)
+- [Inspirations](#inspirations)
+- [License](#license)
+
+## Persyaratan dan kompatibilitas
+
+- Composer untuk instalasi package dan dependensi.
+- Dependensi HTTP: `guzzlehttp/guzzle >=6.0`, sesuai `composer.json`.
+- Dekompresi respons PCare dan i-Care menggunakan `nullpunkt/lz-string-php ^1.3`, yang diinstal otomatis oleh Composer.
+- Kredensial dan akses Web Service BPJS untuk setiap layanan yang digunakan. Sesuaikan base URL dan nama layanan dengan environment yang diberikan BPJS.
+
+Contoh di bawah menggunakan helper Laravel seperti `env()`, `config()`, dan `response()`. Pada aplikasi PHP di luar Laravel, berikan array konfigurasi langsung ke constructor kelas layanan dan tangani hasilnya sesuai aplikasi Anda.
+
+## Instalasi
 
 ```bash
 composer require indravscode/bridging-bpjs
 ```
 
-## Example Values
+## Mulai menggunakan di Laravel
+
+Contoh berikut mengambil referensi provinsi melalui VClaim.
+
+1. Tambahkan konfigurasi berikut ke `.env`. Ganti nilai contoh kredensial dengan kredensial VClaim Anda, lalu sesuaikan URL dan nama layanan dengan akses BPJS yang digunakan.
+
+```env
+BPJS_CONSID="your-cons-id"
+BPJS_SECRET_KEY="your-secret-key"
+BPJS_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
+BPJS_SERVICE_NAME="vclaim-rest"
+BPJS_USER_KEY="your-user-key"
+```
+
+2. Buat file `config/bpjs.php` agar konfigurasi dapat dibaca melalui `config()` pada aplikasi yang menggunakan cache konfigurasi Laravel.
+
+```php
+<?php
+
+return [
+    'vclaim' => [
+        'cons_id' => env('BPJS_CONSID'),
+        'secret_key' => env('BPJS_SECRET_KEY'),
+        'base_url' => env('BPJS_BASE_URL'),
+        'service_name' => env('BPJS_SERVICE_NAME'),
+        'user_key' => env('BPJS_USER_KEY'),
+    ],
+];
+```
+
+3. Tambahkan route berikut ke `routes/web.php` pada aplikasi Laravel untuk mencoba permintaan pertama.
+
+```php
+use Bridging\Bpjs\VClaim\Referensi;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/bpjs/vclaim/provinsi', function () {
+    $referensi = new Referensi(config('bpjs.vclaim'));
+
+    return response()->json($referensi->propinsi());
+});
+```
+
+Buka `/bpjs/vclaim/provinsi` pada aplikasi Anda. Route ini mengembalikan hasil pemanggilan layanan BPJS sebagai JSON. Keberhasilan permintaan bergantung pada kredensial, akses jaringan, dan ketersediaan layanan BPJS.
+
+## Contoh nilai parameter
 
 Contoh value:
 
@@ -45,32 +122,54 @@ $batasData = 10;
 
 ## VClaim
 
-Tambahkan ke file `.env`:
+Untuk konfigurasi `.env`, file `config/bpjs.php`, dan contoh route, ikuti [panduan mulai menggunakan di Laravel](#mulai-menggunakan-di-laravel).
 
-```env
-BPJS_CONSID="2112121"
-BPJS_SECRET_KEY="121212121"
-BPJS_BASE_URL="https://apijkn.bpjs-kesehatan.go.id"
-BPJS_SERVICE_NAME="vclaim-rest"
-BPJS_USER_KEY="your-user-key"
-```
+Gunakan konfigurasi yang sama saat membuat kelas VClaim lainnya, misalnya untuk mengambil data peserta:
 
 ```php
-use Bridging\Bpjs\VClaim;
+use Bridging\Bpjs\VClaim\Peserta;
 
-function vclaim_config(){
-    $config = [
-        'cons_id' => env('BPJS_CONSID'),
-        'secret_key' => env('BPJS_SECRET_KEY'),
-        'base_url' => env('BPJS_BASE_URL'),
-        'service_name' => env('BPJS_SERVICE_NAME'),
-        'user_key' => env('BPJS_USER_KEY'),
-    ];
-    return $config;
-}
+$peserta = new Peserta(config('bpjs.vclaim'));
+$hasil = $peserta->getByNoKartu($nomorKartu, $tanggalPelayananSep);
+```
 
-$referensi = new VClaim\Referensi($this->vclaim_config());
-return response($referensi->propinsi());
+Isi `$nomorKartu` dengan nomor kartu peserta dan `$tanggalPelayananSep` dengan tanggal pelayanan berformat `YYYY-MM-DD`.
+
+Kelas VClaim yang tersedia: `Referensi`, `Peserta`, `Sep`, `Rujukan`, `Monitoring`, dan `LembarPengajuanKlaim`. Lihat implementasi di [`src/VClaim`](src/VClaim) untuk metode dan parameternya.
+
+## Aplicare
+
+Aplicare menyediakan metode untuk referensi kelas dan pengelolaan data ketersediaan kamar.
+
+Tambahkan variabel berikut ke `.env`. Isi semua nilai dengan kredensial, base URL, dan nama layanan Aplicare yang diberikan BPJS; nilai kosong berikut merupakan placeholder.
+
+```env
+BPJS_APLICARE_CONSID=""
+BPJS_APLICARE_SECRET_KEY=""
+BPJS_APLICARE_BASE_URL=""
+BPJS_APLICARE_SERVICE_NAME=""
+BPJS_APLICARE_USER_KEY=""
+```
+
+Tambahkan entri `aplicare` ke array konfigurasi dalam `config/bpjs.php`:
+
+```php
+'aplicare' => [
+    'cons_id' => env('BPJS_APLICARE_CONSID'),
+    'secret_key' => env('BPJS_APLICARE_SECRET_KEY'),
+    'base_url' => env('BPJS_APLICARE_BASE_URL'),
+    'service_name' => env('BPJS_APLICARE_SERVICE_NAME'),
+    'user_key' => env('BPJS_APLICARE_USER_KEY'),
+],
+```
+
+Ambil referensi kelas kamar:
+
+```php
+use Bridging\Bpjs\Aplicare\KetersediaanKamar;
+
+$kamar = new KetersediaanKamar(config('bpjs.aplicare'));
+$hasil = $kamar->refKelas();
 ```
 
 ## PCare
@@ -343,6 +442,8 @@ return $bpjs->validate($nomorKartu, $kodeDokter);
 - https://dvlp.bpjs-kesehatan.go.id:8888/trust-mark/login.html
 
 ## Contributing
+
+Untuk melaporkan kerentanan keamanan secara privat, ikuti [kebijakan keamanan](SECURITY.md).
 
 Semua kontribusi sangat kami apresiasi dan terbuka untuk diterima! Silakan lihat [panduan kontribusi](CONTRIBUTING.md).
 
