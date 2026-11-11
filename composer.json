@@ -1,7 +1,24 @@
 {
   "name": "indravscode/bridging-bpjs",
-  "description": "Package wrapper untuk bridging BPJS (VClaim, Aplicare, PCare dan i-Care)",
+  "description": "Package wrapper untuk bridging BPJS Kesehatan: VClaim, PCare, Aplicare, Antrean Online, dan i-Care.",
   "type": "library",
+  "keywords": [
+    "php",
+    "laravel",
+    "bpjs",
+    "bpjs-kesehatan",
+    "bridging-bpjs",
+    "vclaim",
+    "pcare",
+    "aplicare",
+    "antrean-bpjs",
+    "icare"
+  ],
+  "homepage": "https://github.com/indravscode/bridging-bpjs",
+  "support": {
+    "issues": "https://github.com/indravscode/bridging-bpjs/issues",
+    "source": "https://github.com/indravscode/bridging-bpjs"
+  },
   "license": "MIT",
   "minimum-stability": "dev",
   "authors": [
@@ -16,6 +33,7 @@
     }
   },
   "require": {
-    "guzzlehttp/guzzle": ">=6.0"
+    "guzzlehttp/guzzle": ">=6.0",
+    "nullpunkt/lz-string-php": "^1.3"
   }
 }
