@@ -25,7 +25,7 @@ class Kelompok extends PcareService
 
     public function peserta($eduId, $nomorKartu = null)
     {
-        $this->feature = "/peserta/{$eduId}";
+        $this->feature .= "/peserta/{$eduId}";
         if ($nomorKartu !== null) {
             $this->feature .= "/{$nomorKartu}";
         }
